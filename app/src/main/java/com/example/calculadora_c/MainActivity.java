@@ -6,20 +6,31 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-
 public class MainActivity extends AppCompatActivity {
 
     Button b1, b2, b3, b4, b5, b6, b7, b8, b9, b0, bac, bc, btnraiz, btnmas, btnres, btnentre, btnmul, bequal, btnpunto, btnparent,
-            btnparent2, btnsin, btncos, btntan, btnx2, bpi, btnxl, btnlog, btnln, btnx3;
+            btnparent2, btnsin, btncos, btntan, btnx2, bpi, btnxl, btnlog, btnln, btnx3, btnRadDeg;
     TextView tvuno, tvdos;
 
     String pi = "3.14159265";  // Valor de pi
+    private boolean modeInDegrees = true;  // Inicialmente en modo Degrees
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+
+        Button btnRadDeg = findViewById(R.id.btnRadDeg);
+        btnRadDeg.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                modeInDegrees = !modeInDegrees;
+                btnRadDeg.setText(modeInDegrees ? "DEG" : "RAD");
+            }
+        });
+
         // Inicializar botones
         b1 = findViewById(R.id.b1);
         b2 = findViewById(R.id.b2);
@@ -175,14 +186,14 @@ public class MainActivity extends AppCompatActivity {
         return (n == 1 || n == 0) ? 1 : n * factorial(n - 1);
     }
 
-    // Evalúa la expresión y calcula el resultado
+
     private void calculateResult() {
         String res = tvdos.getText().toString();
         try {
             String replacedString = res.replace("÷", "/")
                     .replace("x", "*")
                     .replace("√", "sqrt");
-            double result = eval(replacedString);
+            double result = eval(replacedString, modeInDegrees);  // Pasamos modeInDegrees
             tvdos.setText(String.valueOf(result));
             tvuno.setText(res);
         } catch (Exception e) {
@@ -191,8 +202,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    // Evalúa una expresión matemática
-    public static double eval(final String str) {
+    // Evalúa la expresión y calcula el resultado, ajustando el modo para trigonométricas
+    public static double eval(final String str, boolean modeInDegrees) {  // Recibe modeInDegrees como parámetro
         return new Object() {
             int pos = -1, ch;
 
@@ -250,13 +261,23 @@ public class MainActivity extends AppCompatActivity {
                     while (ch >= 'a' && ch <= 'z') nextChar();
                     String func = str.substring(startPos, this.pos);
                     x = parseFactor();
-                    if (func.equals("sqrt")) x = Math.sqrt(x);  // Raíz cuadrada
-                    else if (func.equals("sin")) x = Math.sin(Math.toRadians(x));
-                    else if (func.equals("cos")) x = Math.cos(Math.toRadians(x));
-                    else if (func.equals("tan")) x = Math.tan(Math.toRadians(x));
-                    else if (func.equals("log")) x = Math.log10(x);
-                    else if (func.equals("ln")) x = Math.log(x);
-                    else throw new RuntimeException("Unknown function: " + func);
+
+                    // Funciones trigonométricas con modeInDegrees
+                    if (func.equals("sqrt")) {
+                        x = Math.sqrt(x);  // Raíz cuadrada
+                    } else if (func.equals("sin")) {
+                        x = modeInDegrees ? Math.sin(Math.toRadians(x)) : Math.sin(x);
+                    } else if (func.equals("cos")) {
+                        x = modeInDegrees ? Math.cos(Math.toRadians(x)) : Math.cos(x);
+                    } else if (func.equals("tan")) {
+                        x = modeInDegrees ? Math.tan(Math.toRadians(x)) : Math.tan(x);
+                    } else if (func.equals("log")) {
+                        x = Math.log10(x);  // Logaritmo base 10
+                    } else if (func.equals("ln")) {
+                        x = Math.log(x);  // Logaritmo natural
+                    } else {
+                        throw new RuntimeException("Unknown function: " + func);
+                    }
                 } else {
                     throw new RuntimeException("Unexpected: " + (char) ch);
                 }
@@ -265,8 +286,7 @@ public class MainActivity extends AppCompatActivity {
 
                 return x;
             }
-
-
         }.parse();
     }
+
 }
